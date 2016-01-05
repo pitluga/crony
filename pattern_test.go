@@ -60,3 +60,12 @@ func TestIntervals(t *testing.T) {
 		{time.Date(2016, time.January, 5, 10, 33, 0, 0, time.UTC), false},
 	})
 }
+
+func TestLists(t *testing.T) {
+	IsScheduled(t, "15,33,57 * * * * *", []TimeTestCase{
+		{time.Date(2016, time.January, 5, 10, 15, 0, 0, time.UTC), true},
+		{time.Date(2016, time.January, 5, 10, 5, 0, 0, time.UTC), false},
+		{time.Date(2016, time.January, 5, 10, 4, 0, 0, time.UTC), false},
+		{time.Date(2016, time.January, 5, 10, 33, 0, 0, time.UTC), true},
+	})
+}

@@ -49,6 +49,15 @@ func (interval *Interval) Matches(timePart int) bool {
 	return interval.numerator.Matches(timePart) && math.Mod(float64(timePart), float64(interval.denominator)) == 0
 }
 
+type List struct {
+	field string
+	values map[int]bool
+}
+
+func (list *List) Matches(timePart int) bool {
+	return list.values[timePart]
+}
+
 type CronSchedule struct {
 	minutes FieldMatcher
 	hours FieldMatcher
@@ -88,6 +97,10 @@ func parseField(field string) FieldMatcher {
 	if err != nil {
 		panic("invalid hardcoded regexp!")
 	}
+	listRegexp, err := regexp.Compile(`\A\d+(,\d+)+\z`)
+	if err != nil {
+		panic("invalid hardcoded regexp!")
+	}
 
 	if "*" == field {
 		return &Wildcard{field}
@@ -106,6 +119,16 @@ func parseField(field string) FieldMatcher {
 			field: field,
 			numerator: parseField(intervalParts[0]),
 			denominator: safeAtoi(intervalParts[1]),
+		}
+	} else if listRegexp.MatchString(field) {
+		parts := strings.Split(field, ",")
+		values := make(map[int]bool)
+		for _, part := range(parts) {
+			values[safeAtoi(part)] = true
+		}
+		return &List{
+			field: field,
+			values: values,
 		}
 	}
 	return nil
