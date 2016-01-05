@@ -8,12 +8,12 @@ import(
 	"time"
 )
 
-type UnitMatcher interface {
+type FieldMatcher interface {
 	Matches(timePart int) bool
 }
 
 type Wildcard struct {
-	subpattern string
+	field string
 }
 
 func (_ *Wildcard) Matches(timePart int) bool {
@@ -21,7 +21,7 @@ func (_ *Wildcard) Matches(timePart int) bool {
 }
 
 type Constant struct {
-	subpattern string
+	field string
 	value int
 }
 
@@ -30,7 +30,7 @@ func (constant *Constant) Matches(timePart int) bool {
 }
 
 type Range struct {
-	subpattern string
+	field string
 	min, max int
 }
 
@@ -39,12 +39,12 @@ func (r *Range) Matches(timePart int) bool {
 }
 
 type CronSchedule struct {
-	minutes UnitMatcher
-	hours UnitMatcher
-	dayOfMonth UnitMatcher
-	monthOfYear UnitMatcher
-	dayOfWeek UnitMatcher
-	year UnitMatcher
+	minutes FieldMatcher
+	hours FieldMatcher
+	dayOfMonth FieldMatcher
+	monthOfYear FieldMatcher
+	dayOfWeek FieldMatcher
+	year FieldMatcher
 }
 
 type Schedule interface {
@@ -56,7 +56,7 @@ func (schedule CronSchedule) ShouldRun(t time.Time) bool {
 
 }
 
-func parsePart(subpattern string) UnitMatcher {
+func parseField(field string) FieldMatcher {
 	constantRegexp, err := regexp.Compile(`\A\d+\z`)
 	if err != nil {
 		panic("invalid hardcoded regexp!")
@@ -66,16 +66,16 @@ func parsePart(subpattern string) UnitMatcher {
 		panic("invalid hardcoded regexp!")
 	}
 
-	if "*" == subpattern {
-		return &Wildcard{subpattern}
-	} else if constantRegexp.MatchString(subpattern) {
-		number, err := strconv.Atoi(subpattern)
+	if "*" == field {
+		return &Wildcard{field}
+	} else if constantRegexp.MatchString(field) {
+		number, err := strconv.Atoi(field)
 		if err != nil {
-			panic(fmt.Sprintf("regexp matched integer, but couldn't convert %q to int", subpattern))
+			panic(fmt.Sprintf("regexp matched integer, but couldn't convert %q to int", field))
 		}
-		return &Constant{subpattern, number}
-	} else if rangeRegexp.MatchString(subpattern) {
-		rangeParts := strings.Split(subpattern, "-")
+		return &Constant{field, number}
+	} else if rangeRegexp.MatchString(field) {
+		rangeParts := strings.Split(field, "-")
 		min, err := strconv.Atoi(rangeParts[0])
 		if err != nil {
 			panic(fmt.Sprintf("regexp matched integer, but couldn't convert %q to int", rangeParts[0]))
@@ -84,20 +84,20 @@ func parsePart(subpattern string) UnitMatcher {
 		if err != nil {
 			panic(fmt.Sprintf("regexp matched integer, but couldn't convert %q to int", rangeParts[1]))
 		}
-		return &Range{subpattern, min, max}
+		return &Range{field, min, max}
 	}
 	return nil
 }
 
 func Parse(pattern string) Schedule {
-	parts := strings.Split(pattern, " ")
+	fields := strings.Split(pattern, " ")
 
 	return &CronSchedule{
-		minutes: parsePart(parts[0]),
-		hours: parsePart(parts[1]),
-		dayOfMonth: parsePart(parts[2]),
-		monthOfYear: parsePart(parts[3]),
-		dayOfWeek: parsePart(parts[4]),
-		year: parsePart(parts[4]),
+		minutes: parseField(fields[0]),
+		hours: parseField(fields[1]),
+		dayOfMonth: parseField(fields[2]),
+		monthOfYear: parseField(fields[3]),
+		dayOfWeek: parseField(fields[4]),
+		year: parseField(fields[4]),
 	}
 }
