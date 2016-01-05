@@ -2,6 +2,7 @@ package cron
 
 import(
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -38,6 +39,16 @@ func (r *Range) Matches(timePart int) bool {
 	return timePart >= r.min && timePart <= r.max
 }
 
+type Interval struct {
+	field string
+	numerator FieldMatcher
+	denominator int
+}
+
+func (interval *Interval) Matches(timePart int) bool {
+	return interval.numerator.Matches(timePart) && math.Mod(float64(timePart), float64(interval.denominator)) == 0
+}
+
 type CronSchedule struct {
 	minutes FieldMatcher
 	hours FieldMatcher
@@ -56,6 +67,14 @@ func (schedule CronSchedule) ShouldRun(t time.Time) bool {
 
 }
 
+func safeAtoi(str string) int {
+	number, err := strconv.Atoi(str)
+	if err != nil {
+		panic(fmt.Sprintf("regexp matched integer, but couldn't convert %q to int", str))
+	}
+	return number
+}
+
 func parseField(field string) FieldMatcher {
 	constantRegexp, err := regexp.Compile(`\A\d+\z`)
 	if err != nil {
@@ -65,26 +84,29 @@ func parseField(field string) FieldMatcher {
 	if err != nil {
 		panic("invalid hardcoded regexp!")
 	}
+	intervalRegexp, err := regexp.Compile(`\A.*/\d+\z`)
+	if err != nil {
+		panic("invalid hardcoded regexp!")
+	}
 
 	if "*" == field {
 		return &Wildcard{field}
 	} else if constantRegexp.MatchString(field) {
-		number, err := strconv.Atoi(field)
-		if err != nil {
-			panic(fmt.Sprintf("regexp matched integer, but couldn't convert %q to int", field))
-		}
-		return &Constant{field, number}
+		return &Constant{field, safeAtoi(field)}
 	} else if rangeRegexp.MatchString(field) {
 		rangeParts := strings.Split(field, "-")
-		min, err := strconv.Atoi(rangeParts[0])
-		if err != nil {
-			panic(fmt.Sprintf("regexp matched integer, but couldn't convert %q to int", rangeParts[0]))
+		return &Range{
+			field: field,
+			min: safeAtoi(rangeParts[0]),
+			max: safeAtoi(rangeParts[1]),
 		}
-		max, err := strconv.Atoi(rangeParts[1])
-		if err != nil {
-			panic(fmt.Sprintf("regexp matched integer, but couldn't convert %q to int", rangeParts[1]))
+	} else if intervalRegexp.MatchString(field) {
+		intervalParts := strings.Split(field, "/")
+		return &Interval{
+			field: field,
+			numerator: parseField(intervalParts[0]),
+			denominator: safeAtoi(intervalParts[1]),
 		}
-		return &Range{field, min, max}
 	}
 	return nil
 }
