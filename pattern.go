@@ -93,7 +93,7 @@ func parseField(field string) FieldMatcher {
 	if err != nil {
 		panic("invalid hardcoded regexp!")
 	}
-	intervalRegexp, err := regexp.Compile(`\A.*/\d+\z`)
+	intervalRegexp, err := regexp.Compile(`\A(\*|\d+\-\d+)/\d+\z`)
 	if err != nil {
 		panic("invalid hardcoded regexp!")
 	}
