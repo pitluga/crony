@@ -1,9 +1,10 @@
 package server
 
 import (
-	"github.com/pitluga/crony/crony"
 	"testing"
 	"time"
+
+	"github.com/pitluga/crony/crony"
 )
 
 func TestOnceWithNoJobsDoesNothing(t *testing.T) {
@@ -48,7 +49,7 @@ func TestStartStopWithSingleJob(t *testing.T) {
 		time.Millisecond*10,
 	)
 
-	timer := time.NewTimer(time.Millisecond * 12)
+	timer := time.NewTimer(time.Millisecond * 15)
 	<-timer.C
 
 	server.Stop()
