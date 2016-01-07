@@ -10,7 +10,10 @@ import (
 func main() {
 	done := make(chan string)
 	server.Start(
-		crony.CreateFakeExecutor(),
+		crony.NewLocalExecutor(
+			crony.NewStdoutPipe("stdout"),
+			crony.NewStdoutPipe("stderr"),
+		),
 		[]crony.Job{
 			crony.Job{crony.Parse("* * * * * *"), "echo hi"},
 		},
