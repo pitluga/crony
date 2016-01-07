@@ -1,25 +1,26 @@
-package cron
+package server
 
-import(
+import (
+	"github.com/pitluga/crony/crony"
 	"time"
 )
 
 type Server struct {
-	executor Executor
-	ticker *time.Ticker
-	jobs []Job
+	executor crony.Executor
+	ticker   *time.Ticker
+	jobs     []crony.Job
 }
 
-func Start(executor Executor, jobs []Job, interval time.Duration) *Server {
+func Start(executor crony.Executor, jobs []crony.Job, interval time.Duration) *Server {
 	ticker := time.NewTicker(interval)
 
 	server := &Server{
 		executor: executor,
-		jobs: jobs,
-		ticker: ticker,
+		jobs:     jobs,
+		ticker:   ticker,
 	}
 
-	go func () {
+	go func() {
 		for now := range ticker.C {
 			server.Once(now)
 		}

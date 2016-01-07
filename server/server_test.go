@@ -1,16 +1,16 @@
-package cron
+package server
 
-import(
+import (
+	"github.com/pitluga/crony/crony"
 	"testing"
 	"time"
 )
 
-
 func TestOnceWithNoJobsDoesNothing(t *testing.T) {
-	executor := CreateFakeExecutor()
+	executor := crony.CreateFakeExecutor()
 	server := &Server{
 		executor: executor,
-		jobs: make([]Job, 0),
+		jobs:     make([]crony.Job, 0),
 	}
 
 	server.Once(time.Now())
@@ -21,11 +21,11 @@ func TestOnceWithNoJobsDoesNothing(t *testing.T) {
 }
 
 func TestOnceWithAWildcardJobRunsIt(t *testing.T) {
-	executor := CreateFakeExecutor()
+	executor := crony.CreateFakeExecutor()
 	server := &Server{
 		executor: executor,
-		jobs: []Job{
-			Job{Parse("* * * * * *"), "echo hi"},
+		jobs: []crony.Job{
+			crony.Job{crony.Parse("* * * * * *"), "echo hi"},
 		},
 	}
 
@@ -41,11 +41,11 @@ func TestOnceWithAWildcardJobRunsIt(t *testing.T) {
 }
 
 func TestStartStopWithSingleJob(t *testing.T) {
-	executor := CreateFakeExecutor()
+	executor := crony.CreateFakeExecutor()
 	server := Start(
 		executor,
-		[]Job{Job{Parse("* * * * * *"), "echo hi"}},
-		time.Millisecond * 10,
+		[]crony.Job{crony.Job{crony.Parse("* * * * * *"), "echo hi"}},
+		time.Millisecond*10,
 	)
 
 	timer := time.NewTimer(time.Millisecond * 12)

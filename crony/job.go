@@ -1,4 +1,4 @@
-package cron
+package crony
 
 type Job struct {
 	Schedule Schedule

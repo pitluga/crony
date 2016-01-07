@@ -1,4 +1,4 @@
-package cron
+package crony
 
 type Executor interface {
 	Execute(command string) error
